@@ -11,7 +11,6 @@ import 'data/repository/isar_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the IsarService
   await IsarService.init();
 
   runApp(const MyApp());

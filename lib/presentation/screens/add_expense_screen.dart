@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../data/models/expense.dart';
+import '../bloc/authentication_state.dart';
 import '../bloc/expense_bloc.dart';
 import '../bloc/expense_event.dart';
+import '../bloc/authentication_bloc.dart'; // Import AuthenticationBloc
 
 class AddExpenseScreen extends StatefulWidget {
   final Expense? expense;
@@ -59,32 +61,41 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     final String title = _titleController.text;
     final String category = _categoryController.text;
     final DateTime date = _selectedDate;
-    final userEmail = "currentUserEmail@example.com"; // Get this dynamically
 
-    if (widget.expense != null) {
-      context.read<ExpenseBloc>().add(UpdateExpense(
-        oldExpense: widget.expense!,
-        newExpense: Expense()
-          ..id = widget.expense!.id
-          ..amount = amount
-          ..title = title
-          ..category = category
-          ..date = date
-          ..userEmail = userEmail,
-      ));
+    final authState = context.read<AuthenticationBloc>().state;
+    if (authState is AuthenticationAuthenticated) {
+      final userEmail = authState.email;
+
+      if (widget.expense != null) {
+        context.read<ExpenseBloc>().add(UpdateExpense(
+          oldExpense: widget.expense!,
+          newExpense: Expense()
+            ..id = widget.expense!.id
+            ..amount = amount
+            ..title = title
+            ..category = category
+            ..date = date
+            ..userEmail = userEmail,
+        ));
+      } else {
+        context.read<ExpenseBloc>().add(AddExpense(
+          amount: amount,
+          title: title,
+          category: category,
+          dateTime: date,
+          userEmail: userEmail,
+        ));
+      }
+
+      Navigator.pop(context);
+      context.read<ExpenseBloc>().add(LoadExpenses());
+
     } else {
-      context.read<ExpenseBloc>().add(AddExpense(
-        amount: amount,
-        title: title,
-        category: category,
-        dateTime: date,
-        userEmail: userEmail,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User not authenticated')),
+      );
     }
-
-    Navigator.pop(context);
   }
-
 
   @override
   Widget build(BuildContext context) {

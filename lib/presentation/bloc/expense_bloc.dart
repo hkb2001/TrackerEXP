@@ -16,7 +16,6 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   }
 
   Future<void> _onAddExpense(AddExpense event, Emitter<ExpenseState> emit) async {
-    emit(ExpenseLoading());
     try {
       final expense = Expense()
         ..amount = event.amount
@@ -29,6 +28,7 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         await _isar.expenses.put(expense);
       });
 
+      // Trigger loading to get the latest list of expenses
       add(LoadExpenses());
     } catch (e) {
       emit(ExpenseError(error: e.toString()));
@@ -52,7 +52,6 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   }
 
   Future<void> _onUpdateExpense(UpdateExpense event, Emitter<ExpenseState> emit) async {
-    emit(ExpenseLoading());
     try {
       final updatedExpense = Expense()
         ..id = event.newExpense.id
@@ -73,7 +72,6 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   }
 
   Future<void> _onExpenseDelete(ExpenseDelete event, Emitter<ExpenseState> emit) async {
-    emit(ExpenseLoading());
     try {
       await _isar.writeTxn(() async {
         await _isar.expenses.delete(event.expense.id);

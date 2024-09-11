@@ -1,4 +1,3 @@
-import 'package:expense_tracker/presentation/screens/add_expense_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,6 +9,7 @@ import '../bloc/authentication_event.dart';
 import '../bloc/expense_bloc.dart';
 import '../bloc/expense_event.dart';
 import '../bloc/expense_state.dart';
+import 'add_expense_screen.dart';
 
 class ExpenseHomeScreen extends StatefulWidget {
   final String email;
@@ -26,6 +26,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    context.read<ExpenseBloc>().add(LoadExpenses()); // Load initial expenses
   }
 
   @override
@@ -50,7 +51,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
         },
         backgroundColor: Colors.teal,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add,color: Colors.white,),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -58,8 +59,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
           backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.auto_graph), label: "Stats"),
+            BottomNavigationBarItem(icon: Icon(Icons.auto_graph), label: "Stats"),
           ],
         ),
       ),
@@ -117,10 +117,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(
-                height: 20,
-              ),
-              // Search TextField
+              const SizedBox(height: 20),
               TextField(
                 controller: _searchController,
                 decoration: const InputDecoration(
@@ -131,9 +128,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(
-                height: 20,
-              ),
+              const SizedBox(height: 20),
               BlocBuilder<ExpenseBloc, ExpenseState>(
                 builder: (context, state) {
                   if (state is ExpenseLoading) {
@@ -177,17 +172,17 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                                       ),
                                       const Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             "Income",
                                             style:
-                                                TextStyle(color: Colors.white),
+                                            TextStyle(color: Colors.white),
                                           ),
                                           Text(
                                             "Rs. 2,500.00", // Example value, replace with actual data if needed
                                             style:
-                                                TextStyle(color: Colors.white),
+                                            TextStyle(color: Colors.white),
                                           )
                                         ],
                                       ),
@@ -198,12 +193,12 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                                       ),
                                       Column(
                                         crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                         children: [
                                           const Text(
                                             "Expenses",
                                             style:
-                                                TextStyle(color: Colors.white),
+                                            TextStyle(color: Colors.white),
                                           ),
                                           Text(
                                             "Rs. ${state.totalBalance.toStringAsFixed(2)}",
@@ -245,19 +240,25 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                                   key: ValueKey(expense.date.toIso8601String()),
                                   endActionPane: ActionPane(
                                       motion: const ScrollMotion(),
-                                      dismissible:
-                                          DismissiblePane(onDismissed: () {
-                                        context
-                                            .read<ExpenseBloc>()
-                                            .add(ExpenseDelete(expense));
-                                      }),
+                                      dismissible: DismissiblePane(
+                                          onDismissed: () {
+                                            context
+                                                .read<ExpenseBloc>()
+                                                .add(ExpenseDelete(expense));
+                                          }),
                                       children: [
                                         SlidableAction(
                                           onPressed: (context) {
-                                            AddExpenseScreen(expense: expense);
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AddExpenseScreen(expense: expense),
+                                              ),
+                                            );
                                           },
                                           backgroundColor:
-                                              const Color(0xFF21B7CA),
+                                          const Color(0xFF21B7CA),
                                           foregroundColor: Colors.white,
                                           icon: Icons.edit,
                                         ),
@@ -266,7 +267,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                                             _showDeleteDialog(context, expense);
                                           },
                                           backgroundColor:
-                                              const Color(0xFFFE4A49),
+                                          const Color(0xFFFE4A49),
                                           foregroundColor: Colors.white,
                                           icon: Icons.delete,
                                         ),
@@ -287,7 +288,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                       ),
                     );
                   } else if (state is ExpenseError) {
-                    return Text('Error: ${state.error}');
+                    return Center(child: Text('Error: ${state.error}'));
                   }
                   return const Center(child: Text('No expenses found.'));
                 },
@@ -358,5 +359,3 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
     );
   }
 }
-
-

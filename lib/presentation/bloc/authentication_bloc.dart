@@ -3,18 +3,13 @@ import 'authentication_event.dart';
 import 'authentication_state.dart';
 
 class AuthenticationBloc extends Bloc<AuthenticationEvent, AuthenticationState> {
-  AuthenticationBloc() : super(AuthenticationInitial());
-
-  @override
-  Stream<AuthenticationState> mapEventToState(AuthenticationEvent event) async* {
-    if (event is AuthenticationLoginRequested) {
-      yield* _mapLoginRequestedToState(event);
-    } else if (event is AuthenticationLoggedOut) {
-      yield AuthenticationUnauthenticated();
-    }
+  AuthenticationBloc() : super(AuthenticationInitial()) {
+    on<AuthenticationLoginRequested>(_onLoginRequested);
+    on<AuthenticationLoggedOut>(_onLoggedOut);
   }
 
-  Stream<AuthenticationState> _mapLoginRequestedToState(AuthenticationLoginRequested event) async* {
+  Future<void> _onLoginRequested(
+      AuthenticationLoginRequested event, Emitter<AuthenticationState> emit) async {
     final email = event.email;
     final password = event.password;
 
@@ -25,10 +20,15 @@ class AuthenticationBloc extends Bloc<AuthenticationEvent, AuthenticationState> 
       if (password.length < 6) {
         throw Exception('Password must be at least 6 characters long');
       }
-      yield AuthenticationAuthenticated(email: email);
+      emit(AuthenticationAuthenticated(email: email));
     } catch (e) {
-      yield AuthenticationError(error: e.toString());
+      emit(AuthenticationError(error: e.toString()));
     }
+  }
+
+  void _onLoggedOut(
+      AuthenticationLoggedOut event, Emitter<AuthenticationState> emit) {
+    emit(AuthenticationUnauthenticated());
   }
 
   bool isValidEmail(String email) {
