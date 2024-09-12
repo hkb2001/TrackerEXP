@@ -25,6 +25,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _categoryController = TextEditingController();
 
   @override
+  void dispose() {
+    // context
+    //     .read<ExpenseBloc>()
+    //     .add(LoadExpenses());
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 
@@ -87,12 +95,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ));
       }
 
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       context.read<ExpenseBloc>().add(LoadExpenses());
 
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User not authenticated')),
+        const SnackBar(content: Text('User not authenticated')),
       );
     }
   }

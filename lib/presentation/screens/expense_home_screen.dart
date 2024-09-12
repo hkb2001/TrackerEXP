@@ -26,7 +26,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    context.read<ExpenseBloc>().add(LoadExpenses()); // Load initial expenses
+    context.read<ExpenseBloc>().add(LoadExpenses());
   }
 
   @override
@@ -47,7 +47,16 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/add');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddExpenseScreen(),
+            ),
+          ).then((result) {
+            if (result == true) {
+              context.read<ExpenseBloc>().add(LoadExpenses());
+            }
+          });
         },
         backgroundColor: Colors.teal,
         shape: const CircleBorder(),
@@ -59,7 +68,8 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
           backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.auto_graph), label: "Stats"),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.auto_graph), label: "Stats"),
           ],
         ),
       ),
@@ -130,16 +140,17 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
               ),
               const SizedBox(height: 20),
               BlocBuilder<ExpenseBloc, ExpenseState>(
-                builder: (context, state) {
+                builder: (ctx, state) {
                   if (state is ExpenseLoading) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is ExpenseLoaded) {
+                    debugPrint('UI received expenses: ${state.expenses}');
                     return Expanded(
                       child: Column(
                         children: [
                           Container(
-                            height: MediaQuery.of(context).size.width / 2,
-                            width: MediaQuery.of(context).size.width,
+                            height: MediaQuery.of(ctx).size.width / 2,
+                            width: MediaQuery.of(ctx).size.width,
                             decoration: BoxDecoration(
                               color: Colors.teal,
                               borderRadius: BorderRadius.circular(20),
@@ -180,7 +191,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                                             TextStyle(color: Colors.white),
                                           ),
                                           Text(
-                                            "Rs. 2,500.00", // Example value, replace with actual data if needed
+                                            "Rs. 2,500.00",
                                             style:
                                             TextStyle(color: Colors.white),
                                           )
@@ -234,44 +245,59 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
                           Expanded(
                             child: ListView.builder(
                               itemCount: state.expenses.length,
-                              itemBuilder: (context, index) {
+                              itemBuilder: (ctxt, index) {
                                 final expense = state.expenses[index];
                                 return Slidable(
-                                  key: ValueKey(expense.date.toIso8601String()),
+                                  key: ValueKey(expense.id),
                                   endActionPane: ActionPane(
-                                      motion: const ScrollMotion(),
-                                      dismissible: DismissiblePane(
-                                          onDismissed: () {
-                                            context
-                                                .read<ExpenseBloc>()
-                                                .add(ExpenseDelete(expense));
-                                          }),
-                                      children: [
-                                        SlidableAction(
-                                          onPressed: (context) {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddExpenseScreen(expense: expense),
-                                              ),
-                                            );
-                                          },
-                                          backgroundColor:
-                                          const Color(0xFF21B7CA),
-                                          foregroundColor: Colors.white,
-                                          icon: Icons.edit,
-                                        ),
-                                        SlidableAction(
-                                          onPressed: (context) {
-                                            _showDeleteDialog(context, expense);
-                                          },
-                                          backgroundColor:
-                                          const Color(0xFFFE4A49),
-                                          foregroundColor: Colors.white,
-                                          icon: Icons.delete,
-                                        ),
-                                      ]),
+                                    motion: const ScrollMotion(),
+                                    dismissible: DismissiblePane(
+                                      onDismissed: () {
+                                        ctxt
+                                            .read<ExpenseBloc>()
+                                            .add(ExpenseDelete(expense));
+                                      },
+                                    ),
+                                    children: [
+                                      SlidableAction(
+                                        onPressed: (_) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AddExpenseScreen(
+                                                      expense: expense),
+                                            ),
+                                          ).then((result) {
+                                            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                                              context
+                                                  .read<ExpenseBloc>()
+                                                  .add(LoadExpenses());
+                                            },);
+
+                                            // if (result == true) {
+                                            //   context
+                                            //       .read<ExpenseBloc>()
+                                            //       .add(LoadExpenses());
+                                            // }
+                                          });
+                                        },
+                                        backgroundColor:
+                                        const Color(0xFF21B7CA),
+                                        foregroundColor: Colors.white,
+                                        icon: Icons.edit,
+                                      ),
+                                      SlidableAction(
+                                        onPressed: (context) {
+                                          _showDeleteDialog(context, expense);
+                                        },
+                                        backgroundColor:
+                                        const Color(0xFFFE4A49),
+                                        foregroundColor: Colors.white,
+                                        icon: Icons.delete,
+                                      ),
+                                    ],
+                                  ),
                                   child: ListTile(
                                     title: Text(expense.title),
                                     subtitle: Text(
@@ -335,8 +361,8 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete'),
-          content: const Text('Are you sure you want to Delete?'),
+          title: const Text('Delete Expense'),
+          content: Text('Are you sure you want to delete "${expense.title}"?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -346,9 +372,7 @@ class _ExpenseHomeScreenState extends State<ExpenseHomeScreen> {
             ),
             TextButton(
               onPressed: () {
-                BlocProvider.of<ExpenseBloc>(context).add(
-                  ExpenseDelete(expense),
-                );
+                context.read<ExpenseBloc>().add(ExpenseDelete(expense));
                 Navigator.of(context).pop();
               },
               child: const Text('Delete'),

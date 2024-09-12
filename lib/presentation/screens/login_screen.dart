@@ -47,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         } else if (state is AuthenticationError) {
-          print('Authentication error: ${state.error}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error)),
           );
